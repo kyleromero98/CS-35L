@@ -1,0 +1,84 @@
+Name: Kyle Romero
+UID: 204747283
+Discussion: Lab 7
+TA: Tan
+
+Homework 9 - Verifying and Publishing a Backported Change
+
+1. Done.
+
+2. I reused the 'diffutils-3.0' version from the lab when doing this
+homework. Once I navigatee to that directory I typed the following:
+'git checkout -b quote'
+
+3. In order to patch this version I used the command:
+'patch -p1 < quote-3.0-patch.txt'
+
+4. I first opened a file in emacs and examined how the changelog function
+works. I ran emacs inside of the diffutils-3.0 folder and then used the
+command C-x 4 a to get open a changelog.
+
+This made me realize how the function worked and so I was able to continue
+onto the next step.
+
+5. I first used my file 'git-log.txt' from the lab to find the changelog
+entry for the original patch.
+
+Then, I created a changelog using 'touch ChangeLog' inside of the
+diffutils-3.0 directory and then opened each of the six files that have
+been modified using 'git status' and edited the Changelog entry for that
+file using C-x 4 a.
+
+I used the messages from the original patch to come up with the messages
+for this patch.
+
+6. I then added the ChangLog and committed the ChangeLog using the
+following two commands:
+git add .
+git commit -F ChangeLog
+
+7. I was then able to generate the file 'formatted-patch.txt' using the
+following command:
+git format-patch -1 --stdout > ../formatted-patch.txt
+
+8. My partner for this part of the lab was Jair Hinojosa. We used the scp
+command to get copies of each other's formatted-patch.txt
+
+I saved this into a file named partner-patch.txt and then I used the
+following commands to get a new version of diffutils and apply my partner's
+patch:
+git checkout v3.0 -b partner
+git am < ../partner-patch.txt
+
+I then proceeded to build the patched code by doing to following:
+./bootstrap
+Applying the additional patch in accordance with the specification
+./configure
+make
+make check
+
+This ran fine and didn't have any major errors.
+
+9. I then ran the command 'make distdir' and inspected the resulting
+ChangeLog file inside of the diffutils-3.0.1-90c0 that was just made.
+
+This contained the following changelog entry created by my partner:
+
+2017-12-03 Jair Hinojosa <jair@lnxsrv07.seas.ucla.edu>
+      * src/util.c: quote 'like this' or "like this", not `like this'
+
+      * src/sdiff.c: quote 'like this' or "like this", not `like this'
+
+      * src/dir.c: quote 'like this' or "like this", not `like this'
+
+      * src/diff3.c: quote 'like this' or "like this", not `like this'
+
+      * src/diff.c: quote 'like this' or "like this", not `like this'
+
+      * src/cmp.c: quote 'like this' or "like this", not `like this'
+
+
+
+10. I then installed XQuartz for Mac and found the merge that was
+required for the screenshot. I took my screenshot and placed my
+description in 'gitk-description.txt'

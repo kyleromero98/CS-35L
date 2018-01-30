@@ -1,0 +1,6 @@
+2017-10-27  Kyle Matthew Romero  <romero@lnxsrv09.seas.ucla.edu>
+
+	* lib/timespec.h (timespec_cmp):
+	Fixes a bug where old times are shown to be newer than new times.
+	Avoids subtraction and therefore integer overflow to prevent issue.
+

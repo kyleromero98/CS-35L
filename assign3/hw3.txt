@@ -1,0 +1,53 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Laboratory 7
+TA: Tan
+
+Homework Questions
+1) I would hypothesize that this line was removed in order
+to clean up some messy code and poor programming practices.
+There are two labels for the same case which is redundant.
+Removing this line was not necessary since the program would
+have just fallen through in the switch statement.
+
+2) There are two main issues with Brady's patch:
+1 - If there is a program that relies on output in the
+previous format, then there is a possiblity that this
+program will no longer function properly.
+2 - This patch assumes users use the English date format of
+Month/Date/Year. This might cause confusion if people follow a
+different date format such as date/month/year.
+
+3) The file /dev/null acts as an empty file that developers
+can use while testing their code. Looking at the code for
+this script, I can see that this script expects the file
+to contain lines. Therefore, I would expect some kind of
+out of bounds error when we try to run this script on /dev/null.
+
+This is confirmed when I ran the following command and
+received the following repsponse:
+$ python randline.py /dev/null
+Traceback (most recent call last):
+  File "randline.py", line 70, in <module>
+    main()
+  File "randline.py", line 64, in main
+    sys.stdout.write(generator.chooseline())
+  File "randline.py", line 34, in chooseline
+    return random.choice(self.lines)
+  File "/usr/local/cs/Python-2.7.12/lib/python2.7/random.py",
+  line 275, in choice
+    return seq[int(self.random() * len(seq))]  # raises
+    IndexError if seq is empty
+IndexError: list index out of range
+
+4) When this script is ran with python3 instead of python2
+I get the following:
+$ python3 randline.py /dev/null
+  File "randline.py", line 65
+    except IOError as (errno, strerror):
+                      ^
+SyntaxError: invalid syntax
+
+This issue stems from a change from python2 to python3
+where python3 no longer supports tuple parameters, this
+is what this is and therefore an error is thrown.

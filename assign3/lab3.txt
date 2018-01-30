@@ -1,0 +1,188 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Laboratory 7
+TA: Tan
+
+Assignment 3 - Modifying and rewriting software
+
+Laboratory: Installing a small change to a big package
+
+I started this lab by logging into the SEASNet server (09)
+and then creating this log file. Then, I downloaded Coreutils
+7.6 using the 'wget' command into a directory that I created
+named 'test' for the purposes of this lab. Then, I untarred
+the file that I downloaded into the same directory.
+
+I used the following commands:
+wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-7.6.tar.gz
+tar -xzvf coreutils-7.6.tar.gz
+
+I got the URL for the wget command by right clicking the link
+on the specification and selecting 'Copy Link Address'.
+
+I'm now able to enter this directory 'coreutils-7.6' and I
+read through the INSTALL file to understand how I should install
+coreutils. I determined that I needed to use the following command:
+./configure --prefix=/u/cs/ugrad/romero/CS35L/assign3/test/coreutils
+
+This will install coreutils with the following installation prefix
+this is simply for organization sake and ease of management.
+
+I tried running the command on the 09 server, but then I kept
+getting error messages such as the following:
+-bash: cannot create temp file for here-document: No space left
+on device
+
+So, I switched over the the 07 server and ran the command again.
+This time everything worked without errors and appeared to
+configure everything properly.
+
+Then, I entered the installation directory and entered the /bin
+folder. This was located at: ~/CS35L/assign3/test/coreutils/bin
+From there I was able to run the following command to exhibit
+the incorrect output of ls:
+./ls -l /bin/bash
+The following is the output from this command:
+-rwxr-xr-x 1 root root 960632 2017-08-03 06:36 /bin/bash
+
+Note: You can use the locale command to ensure that we are using
+the en_US.UTF-8 locale and we make sure to run ls like this b/c
+if we simply use the ls command located in the system path and we
+want to run the ls command installed by coreutils.
+
+We note that this output exhibits the incorrect YYYY-MM-DD
+behavior.
+
+Now we work to apply the patch, first I created a file called
+'bradypatch.diff' using emacs and copied and pasted Brady's patch
+into the file. Then, I studied the man page for patch and discovered
+that its basically the opposite of diff. I found that I should use the
+command: 'patch -p1 < bradypatch.diff'.
+
+This applied the changes to the relevant files but now we need to
+compile the files with the changes applied; we do this with the make
+command. After running the make command we receive the following
+response:
+make  all-recursive
+make[1]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6'
+Making all in lib
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+make  all-recursive
+make[3]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+make[4]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+make[4]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+make[3]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/lib'
+Making all in src
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/src'
+make  all-am
+make[3]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/src'
+  CC     ls.o
+  CCLD   dir
+  CCLD   vdir
+  CCLD   ls
+make[3]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/src'
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/src'
+Making all in doc
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/doc'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/doc'
+Making all in man
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/man'
+  GEN    dir.1
+  GEN    vdir.1
+  GEN    ls.1
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/man'
+Making all in po
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/po'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/po'
+Making all in tests
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/tests'
+make[2]: Nothing to be done for 'all'.
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/tests'
+Making all in gnulib-tests
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make  all-recursive
+make[3]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make[4]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make[4]: Nothing to be done for 'all-am'.
+make[4]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make[3]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6/gnulib-tests'
+make[2]: Entering directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6'
+make[2]: Nothing to be done for 'all-am'.
+make[2]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6'
+make[1]: Leaving directory '/w/home.13/cs/ugrad/romero/CS35L/
+assign3/test/coreutils-7.6'
+
+When we ran the make-all recursive command, the make file runs through all
+of the files in this directory searching for changes since the last make.
+Therefore, not all of these commands were necessary because in a lot of the
+directories there weren't any changes. Therefore, the only lines that were
+really necessary are lines where the output doesn't respond with 'Nothing
+to be done for 'all-am''.
+
+And now, we cd into the src directory in order to gain access to our new
+version of the 'ls' command. We enter the following two commands:
+cd src
+./ls -l /bin/bash
+And receive the following response:
+-rwxr-xr-x 1 root root 960632 Aug  3 06:36 /bin/bash
+Note: This follows the correct format and makes sense since we have
+applied the patch to this version of ls.
+
+Then, I created a new directory in my dir for this assignment and
+some new test files using the following commands:
+mkdir testpatch
+cd testpatch
+touch -t 9808071200 old
+touch new
+
+This creates a file from August 7th, 1998 (my birthday) and a new file
+to test both versions of ls.
+
+The commands I ran to test each version and their responses are as follows:
+WITHOUT PATCH
+Input
+~/CS35L/assign3/test/coreutils/bin/ls -l
+Response
+-rw-r--r-- 1 romero csugrad 0 2017-10-21 18:03 new
+-rw-r--r-- 1 romero csugrad 0 1998-08-07 12:00 old
+
+WITH PATCH
+Input
+~/CS35L/assign3/test/coreutils-7.6/src/ls -l
+Response
+-rw-r--r-- 1 romero csugrad 0 Oct 21 18:03 new
+-rw-r--r-- 1 romero csugrad 0 Aug  7  1998 old
+
+These tests confirm that we have successfully patched the incorrect
+behavior and left the originally buggy version intact.

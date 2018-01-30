@@ -1,0 +1,80 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Lab 7
+TA: Tan
+
+Laboratory 6 - Multithreaded Performance
+
+First, I checked to ensure that I was using the correct
+version of sort and that that version was updated. I ran
+the following commands and received the following responses.
+
+$ which sort
+/usr/local/cs/bin/sort
+$ sort --version
+sort (GNU coreutils) 8.28
+
+This is the correct output and thus I am able to continue with the lab.
+
+In order to generate a file with 10,000,000 random floats I started with the
+command noted in the specification of 'od'. Using the man page for od,
+I was able to determine that in order to get 10,000,000 floats from /dev/urandom
+I should use the following command: 'od -tf -N 40000000 < /dev/urandom > big.txt'.
+(each float is 4 bytes and so we want 40000000 bytes of data)
+
+Then, I wanted to remove the first seven characters of each line in order
+to remove the 7-digit address spaces at the beginning:
+$ sed -i 's/^.\{7\}//' big.txt
+
+The -i option allows us to edit the file in place.
+
+Then, I want to replace all of the spaces with newline characters and remove
+any excess spaces. Therefore, I run the following command:
+$ cat big.txt | tr ' ' '\n' | sed '/^$/d' > big2.txt
+
+This replaces all of the spaces with new lines and then removes duplicate new
+lines, storing the final file inside of big2.txt.
+
+Towards the end of the file I noticed a bunch of 2 digit numbers that I wasn't
+sure what to do with and so I just removed them using the following command:
+awk 'length($0)>2' big2.txt > big.txt
+
+So at this point, my big.txt file contains all of the floating point values in
+accordance with the specification and I can start using the time command to test
+out the parallelism of the sort function.
+
+The following are the commands that I ran and their respective outputs:
+
+-----General
+$ time -p sort -g big.txt > /dev/null
+real 19.18
+user 104.80
+sys 0.65
+
+-----1 thread
+$ time -p sort -g --parallel=1 big.txt > /dev/null
+real 90.12
+user 89.89
+sys 0.23
+
+-----2 threads
+$ time -p sort -g --parallel=2 big.txt > /dev/null
+real 48.43
+user 92.27
+sys 0.35
+
+-----4 threads
+$ time -p sort -g --parallel=4 big.txt > /dev/null
+real 27.51
+user 92.98
+sys 0.63
+
+----8 threads
+$ time -p sort -g --parallel=8 big.txt > /dev/null
+real 17.57
+user 93.80
+sys 0.81
+
+I see that the performance of the default case and the case with 8 threads
+running in parallel is close to the same and that each other case is significantly
+longer. This suggests that the default execution of this program is multithreaded.

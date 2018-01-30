@@ -1,0 +1,291 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Laboratory 7
+TA: Tan
+
+Laboratory: Spell-Checking Hawaiian
+
+The first thing that I did for this lab was create this log
+by logging into the SEASnet server and opening a new text file.
+
+Then, I checked my locale in accordance with the specification
+using the shell command 'locale'. My account didn't give me the
+correct response at first so I used the command 'export LC_ALL='C''
+to change my locale to the standard C locale.
+
+Then, I used the sort command to sort the words located at the path
+/usr/share/dict/words and the '>' operator to redirect the output
+of that command to a new file called word. The full command that
+I used is as follows: 'sort /usr/share/dict/words > words'.
+
+Then, I used the wget command to get a .html file that contains all of
+HTML code for the webpage of this assignment. I did this with the
+following command:
+'wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign/assign2.html'
+Then, I converted assign2.html into a .txt file using the following
+command: 'mv assign2.html assign2.txt'
+
+Next, I ran the following commands in order and noted their output and
+how each command's output differed from the one before it:
+tr -c 'A-Za-z' '[\n*]'
+tr -cs 'A-Za-z' '[\n*]'
+tr -cs 'A-Za-z' '[\n*]' | sort
+tr -cs 'A-Za-z' '[\n*]' | sort -u
+tr -cs 'A-Za-z' '[\n*]' | sort -u | comm - words
+tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words
+The differences are outline before along with the formatting variation
+of each command above that I used (some of the commands had to be
+modified in order to take the .txt file in as their input).
+
+First, I examined the man page for tr and discovered that the tr
+command is commonly used for translating, squeezing, and/or deleting
+characters from standard input and writing them to standard output.
+
+tr -c 'A-Za-z' '[\n*]' < assign2.txt
+In addition to finding out what tr does from the man page for it, I
+was also able to find that the '-c' option stands for complement.
+Basically, this command takes the complement of set1 and replaces it
+with set2. In this case, set1 is any letter (lower and upper case) and
+its complement is therefore anything that is not a letter (lower or upper
+case) and set2 is the new line character. Therefore, this command replaces
+all non-letter characters with new line character and outputs the .txt file
+accordingly. That is why we see a lot of words on their own line separated
+with new lines when we run this command.
+
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt
+This command outputs a bunch of words that are each on their own line.
+We note that the only difference between this command and the one preceding
+it is the addition of the -s option. According the tr man page, '-s' stands
+for squeeze and replaces each sequence of the character specified in the
+last set with a single occurence of that character. Therefore, this command's
+output is identical to the previous command's, except with all of the repeated
+new lines removed.
+
+At this point, we essentially have a list of all the words contained in the
+HTML code for this assignment's webpage, with each word on a new line.
+
+The next command required modification in order to produce the correct output.
+tr requires something to operate on before we can sort its output, therfore we
+run the following:
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort
+This command sorts the output of the previous command by piping its output
+into the sort command. Therefore, what is outputted is each word of the HTML
+code for this assignment's webpage on a new line and in lexicographical order
+according to the C locale.
+
+This command also required modification for the same reason as the previous
+command--tr requires some kind of input.
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u
+Using the man page for sort, I found that the '-u' option stands for unique
+and therefore, we are telling sort to only output the first of an equal run.
+The result is the same as the previous command but with only one instance of
+each word. Basically, all of the duplicates have been removed from the previous
+output.
+
+This command required modification for the same reason as the previous two
+commands--tr needs some kind of input before it can be sorted.
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u | comm - words
+Using the man page for comm, I found that the command is used to compare
+two files line by line. The '-' is used to represent standard input, which
+is the list of unique words in the HTML code for this assignment's webpage.
+By piping in that standard input, we are able to compare the unique words
+in the HTML code for this assignment's webpage with the words in the words
+file. The output from this command consists of 3 columns. The first column
+shows the words unique to standard input (the webpage), the second column
+shows the words unique to the words file, and the last column shows the
+words that are common to both files.
+
+This command required modification for the same reason as the previous two
+commands--tr needs some kind of input before it can be piped to sort.
+tr -cs 'A-Za-z' '[\n*]' < assign2.txt | sort -u | comm -23 - words
+This command outputs a column of words each on a new line. This output
+removes the second and third columns from the output of the previous
+commands. Therefore, we have only the words that are unique to the HTML
+code for this assignment's webpage. Furthermore, this acts as a crude
+English spell checker since we are detecting any word that isn't in the
+English dictionary contained in the 'words' file.
+
+After determining what each of these commands do, I began the Hawaiian part
+of this lab by downloading the English to Hawaiian table with the following
+command:
+wget http://mauimapp.com/moolelo/hwnwdseng.htm
+mv hwnwdseng.htm hwn.txt
+
+Then, I spend some time deciding on the best alogrithm for the script.
+Below is the outline that I came up with based on the requirements of the
+specification:
+1. Get all words between <td> and </td>
+2. Isolate the Hawaiian words by deleting every other line from the first
+line (getting rid of every English word) at the second word surrounded by
+<td> and </td>
+3. Convert upper case letters to lower case letters
+4. Search for and replace the remaining tags with blank space
+5. Replace all instances of the grave with a apostrophe
+6. Remove all leading spaces from any line
+7. Search for remaining spaces and replace with new lines
+8. Remove any words that still contain English characters
+9. Sort and remove any duplicate entries
+
+Based on my outline from above, I looked for commands that could help me
+accomplish these tasks and eventually decided that the commands 'tr',
+'grep', and 'sed' would be able to accomplish these tasks for me. This is
+what each command does according to their man page:
+tr - Translate, squeeze, and/or delete characters from standard input,
+writing to standard output
+grep - prints lines matching a pattern
+sed - stream editor for filtering and transforming text
+
+Then, I spent some time studying the regex commands for patterns in order
+to make writing the script as simple and painless as possible.
+
+I will outline the command that I used for each of the 9 operations listed
+above and explain them in addition to any other commands that I used.
+
+1.
+grep '<td>.\{1,\}<\/td>' |
+This command looks for patterns that match the form <td>string of any characters
+except line breaks that is equal to or longer than one character. The output of
+this command should be lines with either an English word or Hawaiian word on
+them with their tags and everything. We then pipe the output to the next
+command.
+
+2.
+sed -n '1~2!p' - |
+This command starts with the first line and increments by two, printing each
+line to standard output. This effectively removes all of the English words
+and leaves only the Hawaiian words. The -n is necessary to supress the output
+of the automatic printing of pattern space. This output is then piped to the
+next command.
+
+3.
+tr "A-Z" "a-z" |
+This command replaces all letters in set1 (uppercase letters) with its
+corresponding character in set2 (lowercase letters). Basically, this
+command replaces all upper case letters with lower case letters. The
+output is then piped to the next command.
+
+4.
+sed 's/<td>//g;s/<\/td>//g;s/<u>//g;s/<\/u>//g' |
+This command is a bit complicated. We have several commands here separated by a
+semicolon and each one finds a tag and replaces it with white space. Each part
+of the sed expression is separated by a '/'. The general format for the
+expression is command/regexp/replace/flags. In our case, for the first
+command, s stands for substitute, our expression is the <td> tag, our replace
+is nothing, and we designate the g option so that we replace all instances of
+that tag with nothing. We then pipe the output of this command to the next
+command.
+
+5.
+tr "`" "\'" |
+This command simply replaces all of the ASCII grave accents with a ', an
+ASCII apostrophe. The output is the piped to the next command.
+
+6.
+sed "s/^\s*//g" |
+This command uses the same format used in section 4. to replace all of the
+leading whitespace with nothing and then pipes the output to the next
+command.
+
+7.
+sed -E "s/,\s|\s/\n/g" |
+This command uses the same format used in sections 4 and 6 to replace all
+of the remaining spaces or commas with new lines in order to treat these
+as separate words. -E allows us to use extended regular expressions rather
+than basic regular expressions in our cammand. The output of this command
+is then output to the next command.
+
+8.
+grep "^[pk\' mnwlhaeiou]\{1,\}$" |
+This command filters the current output of the previous commands for those that
+start and only contain the valid characters of the Hawaiian alphabet. This will
+remove any English words that have gotten through the previous filters and the
+output is then piped to the next command.
+
+9.
+sort -u
+This command sorts the output of our command and removes any duplicate entries
+with the -u option. This is the final command of the script and doesn't pipe
+the output any where.
+
+As requested in the specification, here is the code for my buildwords script:
+#!/bin/bash
+
+grep '<td>.\{1,\}<\/td>' |
+sed -n  '1~2!p' - |
+tr "A-Z" "a-z" |
+sed 's/<td>//g;s/<\/td>//g;s/<u>//g;s/<\/u>//g' |
+tr "\`" "\'" |
+sed "s/^\s*//g" |
+sed -E  "s/,\s|\s/\n/g" |
+grep "^[pk\' mnwlhaeiou]\{1,\}$" |
+sort -u
+
+While testing the buildwords script I had to change the permissions of the file
+so that I could execute it. I just used the command:
+chmod u+x buildwords
+to give myself execute permissions for the file.
+
+While making the script, I was able to test the output by using the commands:
+./buildwords < hwn.txt > hwords
+cat hwords
+
+Finally, in order to find the words that are misspelled as English but not as
+Hawaiian or misspelled as Hawaiian but not as English, I followed the following
+procedure.
+
+First, I found the misspelled English words in the file using the following
+command:
+cat assign2.txt | tr -cs 'A-Za-z' '[\n*]' | tr '[:upper:]' '[:lower:]'
+| sort -u | comm -23 - words > misEng.txt
+This is an adapted version of the command that was used as a crude
+implementation of an English spell checker. I output the files to misEng.txt
+and then the lines are easily countable with the following command:
+wc -w misEng.txt
+And the result is 38 misspelled English words.
+
+Next I found the misspelled Hawaiian words in the HTML file using a similar
+method but changing the commands slightly. We want to only get the Hawaiian
+words so we add a filter to check for the letters that make up the Hawaiian
+alphabet and then we substitute the words file for the hwords file we
+reated with out buildwords script. Here is the command:
+cat assign2.txt | tr '[:upper:]' '[:lower:]' | tr -cs "pk\'mnwlhaeiou" '[\n*]' |
+sort -u | comm -23 - hwords > misH.txt
+We can check for the number of misspelled Hawaiian words like before but this
+time with the command:
+wc -w misH.txt
+In this case, I got 197 misspelled Hawaiian words.
+
+In both instances we have to ensure that we convert all uppercase letters to
+lowercase because our Hawaiian dictionary requires the letters to be all
+lowercase and now in order to check for overlap in the misspelled words we
+want everything to be consistent.
+
+Finally, to answer the questions in the specification we can use the two files
+that I generated above to check for the number of words that were misspelled
+in Hawaiian but not as English and vice versa.
+
+Misspelled as Hawaiian but not as English
+We can use the following two commands to find examples of these words and then
+the number of words that fall into this category:
+comm -13 misEng.txt misH.txt
+comm -13 misEng.txt misH.txt | wc -l
+From this, I get that there are 192 words misspelled in Hawaiian but not in
+English and some examples are:
+pellin
+people
+plea
+emo
+
+Misspelled in English but not in Hawaiian
+We can use a variation on the previous command to see this list of words. We
+use the following two commands to find examples of these words and the
+number of words:
+comm -23 misEng.txt misH.txt
+comm -23 misEng.txt misH.txt | wc -l
+From this, I get that there are 33 words misspelled in English but not in
+Hawaiian and some examples are:
+linux
+opengroup
+sameln
+charset
+wikipedia

@@ -1,0 +1,25 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Lab 7
+TA: Tan
+
+Gitk Description
+
+In the upper left there is the history window that shows the branch tree
+with a graphic of merges and branches. We see the structure of the HEAD
+pointer and various branches in this window.
+
+Then in the window next to that I can see names of authors and their
+respective emails for that commit.
+
+Finally, to the right of that there is a list of dates that correspond
+to the commits and authors on the left.
+
+Below that are the list of files that are modified in that specific commit.
+
+To the left of that in the bottom left corner we have a more detailed list
+of changes in diff format and more information about the committer for this
+commit.
+
+There is also a place for the ID of the commit and we are able to search by
+ID here.

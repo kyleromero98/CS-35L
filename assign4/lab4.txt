@@ -1,0 +1,291 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Laboratory 7
+TA: Tan
+
+Laboratory 4 - Debugging a C Program
+
+I started by logging into my SEASnet account and
+setting up some directories and files for this project
+in order to keep everything organized.
+
+Then, I used the 'wget' command to download the older
+version of coreutils that exhibits the bug. I ran the
+following command:
+$ wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign
+/coreutils-with-bug.tar.gz
+
+And then I untarred the .tar.gz file with the command:
+$ tar -zxvf coreutils-with-bug.tar.gz
+
+And then I moved into the unzipped directory and ran the
+following commands to configure and make the program:
+$ ./configure
+$ make
+
+Running the make file as is results in the following
+error upon execution (everything else appears to run fine):
+In file included from utimecmp.c:41:0:
+utimens.h:2:5: error: conflicting types for 'futimens'
+ int futimens (int, char const *, struct timespec const [2]);
+     ^~~~~~~~
+In file included from utimecmp.h:25:0,
+                 from utimecmp.c:25:
+/usr/include/sys/stat.h:373:12: note: previous declaration of 'futimens' was here
+ extern int futimens (int __fd, const struct timespec __times[2]) __THROW;
+            ^~~~~~~~
+
+Now, I will attempt to patch this file by using the .diff
+available on the assignment webpage.
+
+I used the following command to get the .diff file:
+wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign/coreutils.diff
+This downloaded the coreutils.diff that contains the patch
+into my /coreutils-with-bug/.
+
+Then, I applied the patch using the command:
+patch -p0 < coreutils.diff
+This successfully patched the following files in the
+/coreutils-with-bug/ directory:
+patching file lib/utimens.c
+patching file lib/utimens.h
+patching file src/copy.c
+patching file src/tee.c
+patching file src/touch.c
+
+And then I entered the command 'make' to remake the program
+with the patched files. I encountered no errors on this
+execution of make because the previous errors had been patched.
+
+The problem we were experiencing was caused by two declarations
+of something named 'futimens' in two differeent header files.
+Our fix altered one of them to adopt the name 'coreutils-futimens'.
+This resolved our problem because now the functions have different
+names.
+
+Now, I used the commands on the assignment webpage to create a
+BASH script that would easily reproduce this bug for me. I have
+copied the contents of this script below. The script is called,
+'bug_producer.sh'.
+
+-----------begin bug_producer.sh----------------
+#!/bin/bash
+
+tmp=$(mktemp -d)
+cd $tmp
+touch -d '1918-11-11 11:00 GMT' wwi-armistice
+touch now
+sleep 1
+touch now1
+TZ=UTC0 ~/CS35L/assign4/coreutils-with-bug/src/ls -lt --full-time wwi-armistice now now1
+cd ~/CS35L/assign4/
+rm -fr $tmp
+---------------end bug_producer.sh------------
+
+In order to run my script I had to change the permissions of
+the script by using the following command:
+chmod 777 bug_producer.sh
+
+Then, I proceeded to run my script by typing './bug_producer.sh'.
+I received the following erronoeous response:
+-rw-r--r-- 1 romero csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice
+-rw-r--r-- 1 romero csugrad 0 2017-10-25 22:46:09.218724049 +0000 now1
+-rw-r--r-- 1 romero csugrad 0 2017-10-25 22:46:08.216707511 +0000 now
+
+This is incorrect because the oldest file is listed first. The newest file
+should be listed first, so this is incorrect and is a bug.
+
+In order to check out the bug using GDB I went first manually
+ran to first few lines of my script until the command comes along.
+
+tmp=$(mktemp -d)
+cd $tmp
+touch -d '1918-11-11 11:00 GMT' wwi-armistice
+touch now
+sleep 1
+touch now1
+
+Then, I ran the following command to run the program in GDB:
+gdb ~/CS35L/assign4/coreutils-with-bug/src/ls
+
+Then I used the 'info functions' command to investigate what
+functions are inside of the ls command. I want to look for a
+function that might have to do with sorting.
+
+Inside of the list of functions I found a lot of functions
+that sound like they have to do with comparing time, some
+examples are listed below:
+static int compare_atime(V, V);
+static int compare_ctime(V, V);
+static int compare_extension(V, V);
+static int compare_mtime(V, V);
+static int compare_name(V, V);
+static int compare_size(V, V);
+static int compare_version(V, V);
+static int compstr_atime(V, V);
+static int compstr_ctime(V, V);
+static int compstr_extension(V, V);
+static int compstr_mtime(V, V);
+static int compstr_name(V, V);
+static int compstr_size(V, V);
+
+Farther down in the list, I found another function with
+the following declaration:
+static void sort_files(void);
+
+Therefore, I'll check sort_files first since it seems like
+the most suspect function. I also hypothesize that the sort_files
+function will likely call one of the compare functions in
+order to accomplish most of its work.
+
+I then set a breakpoint at the sort_files function and run the
+program with the following commands:
+break sort_files
+run -lt --full-time
+
+And I notice that the function enters some switch statements
+based on the options specified for sorting. We arrive at the
+following statement:
+func = sort_reverse ? rev_cmp_mtime : compare_mtime;
+
+Therefore, I went to inspect the source code for the function
+compare_mtime since this is likely where the bug originates.
+
+I entered the ls.c file inside of the src folder and search
+for 'compare_mtime' and I discovered that compare_mtime
+calls another function called 'compare_mtime'.
+
+I then proceed to investigate that function by searching for
+it in the same file and discover the following lines of code:
+int diff = timespec_cmp (get_stat_mtime (&b->stat),
+                           get_stat_mtime (&a->stat));
+  return diff ? diff : cmp (a->name, b->name);
+
+Therefore, I see that I should further inspect this function
+using GDB because I cannot find the function 'timespec_cmp'
+in this file using emacs.
+
+Running in GDB I run the following commands to break at
+'timespec_cmp':
+break timespec_cmp
+run -lt --full-time
+
+After entering the function and pressing s a few times,
+I was able to use the 'list' command to see the following:
+(gdb) list
+43	/* Return negative, zero, positive if A < B, A == B, A > B, respectively.
+44	   Assume the nanosecond components are in range, or close to it.  */
+45	static inline int
+46	timespec_cmp (struct timespec a, struct timespec b)
+47	{
+48	  int diff = a.tv_sec - b.tv_sec;
+49	  return diff ? diff : a.tv_nsec - b.tv_nsec;
+50	}
+51	
+52	# if ! HAVE_DECL_NANOSLEEP
+
+The following is some the back and forth between me
+and GDB to isolate the bug:
+(gdb) s
+49	  return diff ? diff : a.tv_nsec - b.tv_nsec;
+(gdb) info locals
+diff = -12
+(gdb) cont
+Continuing.
+
+Breakpoint 1, compare_mtime (a=0x6170b0, b=0x617160) at ls.c:2884
+2884	static int compare_mtime (V a, V b) { return cmp_mtime (a, b, xstrcoll); }
+(gdb) s
+cmp_mtime (cmp=0x4045f0 <xstrcoll>, b=0x617160, a=0x6170b0) at ls.c:2884
+2884	static int compare_mtime (V a, V b) { return cmp_mtime (a, b, xstrcoll); }
+(gdb) s
+timespec_cmp (b=..., a=...) at ../lib/timespec.h:48
+48	  int diff = a.tv_sec - b.tv_sec;
+(gdb) s
+49	  return diff ? diff : a.tv_nsec - b.tv_nsec;
+(gdb) info locals
+diff = -1172019312
+
+We can see that there is an issue when we get to the comparison
+that involves the very old date. Basically, there are too many
+seconds in between the two times and so diff > 0x7fffffff
+
+To avoid this problem we must rewrite the function 'timespec_cmp'
+to not use subtraction.
+
+In order to do this, I first navigate to the location of
+timespec_cmp (timespec.h) and create a copy of the file:
+cd ~/CS35L/assign4/coreutils-with-bug/lib
+cp timespec.h ../../timespec.h
+
+I then wrote my own function that is the simplest and most
+readable way of accomplishing the intended functionality of
+the function:
+static inline int
+timespec_cmp (struct timespec a, struct timespec b)
+{
+  if (a.tv_sec > b.tv_sec) {
+    return 1;
+  } else if (a.tv_sec < b.tv_sec) {
+    return -1;
+  }
+  return 0;
+}
+
+I used the following command to create my .diff file:
+diff -u coreutils-with-bug/lib/timespec.h timespec.h > coreutils-with-bug/patch.diff
+
+I then use emacs to create a Changelog for this file:
+emacs
+C-x 4 a
+I then saved my changelog as the following:
+2017-10-27  Kyle Matthew Romero  <romero@lnxsrv09.seas.ucla.edu>
+
+        * lib/timespec.h (timespec_cmp):
+        Fixes a bug where old times are shown to be newer than new times.
+        Avoids subtraction and therefore integer overflow to prevent issue.
+
+Then to assemble my final diff file I used the following:
+cp Changelog lab4.diff
+cat coreutils-with-bug/patch.diff >> lab4.diff
+
+Then, I used I moved my patch into the proper directory
+using the following command:
+cp lab4.diff coreutils-with-bug/patch.diff
+
+And because I did this I had to modify one of the lines
+in my .diff file to remove the 'coreutils-with-bug' from
+the beginning of 'coreutils-with-bug/lib/timespec.h'
+
+Then I was able to use:
+patch -p0 < lab4.diff
+to apply my patch and I received a message that stated,
+patching file lib/timespec.h
+
+We can now use 'make' to make our file fixed version
+of ls.
+
+And then we can use the same script I used before to test
+the output. Running the script yields the following:
+-rw-r--r-- 1 romero csugrad 0 2017-10-28 01:41:06.299384372 +0000 now1
+-rw-r--r-- 1 romero csugrad 0 2017-10-28 01:41:05.295367764 +0000 now
+-rw-r--r-- 1 romero csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice
+
+And we can see that the output is now in the correct order.
+
+Now, to test how the SEASnet machine performs:
+cd ~
+touch -d '1918-11-11 11:00 GMT' wwi-armistice
+touch now
+touch now1
+TZ=UTC0 ls -lt --full-time wwi-armistice now now1
+
+Which yields the following response:
+-rw-r--r-- 1 romero csugrad 0 2054-12-17 17:28:16.000000000 +0000 wwi-armistice
+-rw-r--r-- 1 romero csugrad 0 2017-10-28 01:43:51.194769000 +0000 now1
+-rw-r--r-- 1 romero csugrad 0 2017-10-28 01:43:48.744546000 +0000 now
+
+Therefore, the SEASnet machines do not perform that well
+and exhibit the bug that we just fixed in the unpatched
+version of coreutils.
+

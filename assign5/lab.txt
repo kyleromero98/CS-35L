@@ -1,0 +1,171 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Lab 7
+TA: Tan
+
+Laboratory: Buffered vs Unbuffered I/O
+
+I started this lab by logging into my SEASNet machine and creating
+a new directory for this assignment. Inside the directory, I created
+two files called 'tr2b.c' and 'tr2u.c' that represent my two
+transliteration programs that use buffered input and unbuffered input,
+respectively.
+
+I started writing the first program, 'tr2b.c', that uses the functions
+getchar and putchar in order to transliterate the bytes from standard
+input into standard output. I also need to check for the potential
+errors that the specification highlights might cause issues for this
+program.
+
+I investigated the behavior of the normal 'tr' function first in order
+to see what it does. The command basically takes in two sets of characters
+from and to and then maps an input from stdin stdout using the bytes of from
+and to.
+
+This first program was fairly easy to write, I made sure to check for each
+of the potential errors that the specification highlights. The comments in
+my code should explain what the program does fairly well.
+
+Then, I moved on to writing the 'tr2u.c' program that does basically the same
+thing but with unbuffered input instead of buffered input. Therefore, I
+basically copied the code from my first program but changed the getchar() and
+putchar() commands into read() and write() calls. This entailed making some
+minor changes to the code and adding '#include<unistd.h>' to the top.
+
+I tried to keep the programs a similar as possible so that when I compare
+them there isn't anything else that could be influencing the timing of
+each program.
+
+In accordance with the specification, I need a file that is >5MB and so I
+used the command 'dd if=/dev/urandom of=bigfile.txt bs=1M count=5' to
+generate such a file.
+
+3a. Running the strace command when copying from one file to another.
+According to the man page I can use the -c option to get a more detailed
+report on the number of system calls that were made.
+
+For the buffered input, I ran the commands:
+strace -c ./tr2b kyle jair < bigfile.txt > buffered.txt
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 35.29    0.000030           8         4           mprotect
+ 15.29    0.000013          13         1           write
+ 12.94    0.000011           6         2           read
+ 12.94    0.000011           3         4           fstat
+ 12.94    0.000011          11         1           munmap
+ 10.59    0.000009           1         9           mmap
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000085                    29         1 total
+Therefore, we had 29 system calls.
+
+For the unbuffered input, I ran the commands:
+strace -c ./tr2u kyle jair < bigfile.txt > unbuffered.txt
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 55.57   27.011763           5   5242880           write
+ 44.43   21.599827           4   5242882           read
+  0.00    0.000037           5         7           mmap
+  0.00    0.000028           7         4           mprotect
+  0.00    0.000013           7         2           open
+  0.00    0.000010          10         1           munmap
+  0.00    0.000008           8         1         1 access
+  0.00    0.000007           4         2           fstat
+  0.00    0.000006           3         2           close
+  0.00    0.000006           6         1           execve
+  0.00    0.000004           4         1           brk
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00   48.611712              10485784         1 total
+Therefore, we had 1048574 system calls.
+
+Significantly more system calls were made during the unbuffered exectution
+since a system call is made twice for each byte. This excercise exemplifies
+the power of using buffers to clump system calls together to do collective work.
+
+3b. Running the strace command when copying from one file to the terminal.
+I followed the same procedure as above except I then ran the following commands.
+
+For buffered input:
+strace -c ./tr2b kyle jair < bigfile.txt
+------ ----------- ----------- --------- --------- ----------------
+  0.00    0.000000           0         2           read
+  0.00    0.000000           0         1           write
+  0.00    0.000000           0         2           open
+  0.00    0.000000           0         2           close
+  0.00    0.000000           0         4           fstat
+  0.00    0.000000           0         9           mmap
+  0.00    0.000000           0         4           mprotect
+  0.00    0.000000           0         1           munmap
+  0.00    0.000000           0         1           brk
+  0.00    0.000000           0         1         1 access
+  0.00    0.000000           0         1           execve
+  0.00    0.000000           0         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000000                    29         1 total
+Which yielded 29 system calls.
+
+For unnbuffered input:
+strace -c ./tr2u kyle jair < bigfile.txt
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 55.07   24.226157           5   5242880           write
+ 44.93   19.764004           4   5242882           read
+  0.00    0.000131          19         7           mmap
+  0.00    0.000123          31         4           mprotect
+  0.00    0.000093          93         1           munmap
+  0.00    0.000045          23         2           close
+  0.00    0.000037          19         2           open
+  0.00    0.000027          14         2           fstat
+  0.00    0.000026          26         1           arch_prctl
+  0.00    0.000021          21         1         1 access
+  0.00    0.000017          17         1           execve
+  0.00    0.000015          15         1           brk
+------ ----------- ----------- --------- --------- ----------------
+100.00   43.990696              10485784         1 total
+Which yielded 10485784 system calls.
+
+We see that in both cases the unbuffered version makes significantly
+more system calls than the buffered version.
+
+4. We then test for time using the command 'time' for the same four cases
+and we get the following results.
+
+For buffered input going from file to file I entered the following command:
+time ./tr2b kyle jair < bigfile.txt > buffered.txt
+And received the following output:
+real	0m0.002s
+user	0m0.001s
+sys	0m0.000s
+
+For unbuffered input going from file to file I entered the following:
+time ./tr2u kyle jair < bigfile.txt > unbuffered.txt
+And received the following output:
+real	0m7.781s
+user	0m0.374s
+sys	0m7.362s
+
+For buffered input going from file to terminal I entered the following:
+time ./tr2b kyle jair < bigfile.txt
+And received the following output:
+real	0m0.002s
+user	0m0.001s
+sys	0m0.000s
+
+For unbuffered input going from file to terminal I entered the following:
+time ./tr2u kyle jair < bigfile.txt
+And received the following output:
+real	0m8.431s
+user	0m0.427s
+sys	0m7.945s
+
+From the information above, it can be determined that getchar and putchar
+are significantly faster than using the read/write system calls to gather
+/display input/output. This is likely because we perform fewer system
+calls while used the getchar and putchar methods than when we call read
+and write directly.

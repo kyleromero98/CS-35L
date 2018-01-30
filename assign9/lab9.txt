@@ -1,0 +1,192 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Laboratory 7
+TA: Tan
+
+Laboratory 9 - Managing a Backported Change
+
+1. First, I copied the file from ~eggert/src/gnu/diffutils into my current working
+directory using the following command:
+cp -r ~eggert/src/gnu/diffutils .
+
+2. Then, I navigated into the diffutils directory and generated a log of changes
+using the following two commands:
+cd diffutils
+git log > ../git-log.txt
+
+3. Similarly, I was able to generate the list of tags using the following command:
+git tag > ../git-tags.txt
+
+4. Then, I used Emacs to search for the name of the patch that we are looking for in
+git-log.txt. Here I was able to find the commit ID for the specific commit in question,
+it is 62ca21c8c1a5aa3488589dcb191a4ef04ae9ed4f.
+
+Then, I was able to create a patch for this commit using the following command:
+git format-patch -1 62ca21c8c1a5aa3488589dcb191a4ef04ae9ed4f -o ../
+
+5. Then, I used the command 'git checkout v3.0' and received the following response:
+Note: checking out 'v3.0'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by performing another checkout.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -b with the checkout command again. Example:
+
+  git checkout -b <new-branch-name>
+
+HEAD is now at 022cd5c... version 3.0
+
+6. At this point I realized that I needed to change the name of my path to quote-patch.txt
+and so I did that with the following command:
+mv 0001-maint-quote-like-this-or-like-this-not-like-this.patch quote-patch.txt
+
+Then, I was able to apply the patch to version 3.0 using the following command:
+patch -p1 < ../quote-patch.txt
+
+There were also a few errors while applying the patch in different hunks and their failed
+changes were saved to the following files:
+README.rej
+README-hacking.rej
+cfg.mk.rej
+src/diff.c.rej
+src/diff3.c.rej
+
+7. Using the 'git status' command I was able to see that we modified a number of files:
+HEAD detached at v3.0
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   NEWS
+	modified:   README
+	modified:   TODO
+	modified:   doc/diagmeet.note
+	modified:   ms/config.bat
+	modified:   ms/config.site
+	modified:   po/en.po
+	modified:   src/analyze.c
+	modified:   src/cmp.c
+	modified:   src/context.c
+	modified:   src/diff.c
+	modified:   src/diff.h
+	modified:   src/diff3.c
+	modified:   src/dir.c
+	modified:   src/ifdef.c
+	modified:   src/io.c
+	modified:   src/sdiff.c
+	modified:   src/side.c
+	modified:   src/system.h
+	modified:   src/util.c
+	modified:   tests/help-version
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	NEWS.orig
+	README-hacking.orig
+	README-hacking.rej
+	README.orig
+	README.rej
+	cfg.mk.orig
+	cfg.mk.rej
+	ms/config.site.orig
+	src/cmp.c.orig
+	src/context.c.orig
+	src/diff.c.orig
+	src/diff.c.rej
+	src/diff.h.orig
+	src/diff3.c.orig
+	src/diff3.c.rej
+	src/dir.c.orig
+	src/sdiff.c.orig
+	src/system.h.orig
+	src/util.c.orig
+	tests/help-version.orig
+
+no changes added to commit (use "git add" and/or "git commit -a")
+
+8. I spent some time figuring out how to use the commands that are listed on
+the specification and reading some documentation related to their usage. Then
+I moved on to the next step.
+
+9. For non .c files, I opened them in Emacs and did C-x v =  and then C-x v u.
+Then you type 'yes' and press Enter. This reverts all of the changes to non .c
+files that were applied in the patch since we don't want them anymore.
+
+For the .c files we need to makes sure that we only revert changes that do not
+alter string constants in actual code. To do this, I first opened each file in
+Emacs and determined whether there were any changed that should not be reverted.
+
+If all changes could be safely reverted then I used the same procedure as with
+non .c files to revert the comments.
+
+Then I returned to files where there were changes that didn't need to be reverted.
+Inside of these files I used the Emacs function diff-apply-hunk to apply the hunks
+that needed to be applied but otherwise did not apply the patches that modified
+hunks that changed actual string constants.
+
+10. Next I examined the src directory for files of the form src/*.c.rej and
+examined the rejected changes in these files. I applied the changes manually
+by going into the corresponding .c file and navigating to the line referenced
+in the .rej file.
+
+All of the rejected changes needed to be applied since they were all in .c files
+and all inside of string constants.
+
+11. I then used the command 'git status' to check the remaining untracked files.
+I needed to delete all of them and so I proceeded to do so using the 'rm' command.
+
+12. After completing the above, I was able to confirm that the command 'git status'
+reports only 6 modified files and no new files.
+
+I was then able to use the command 'git diff > ../quote-3.0-patch.txt' to create
+my patch and confirm that it is between 300 and 400 lines long. Mine is 327 lines
+long.
+
+13. I am now ready to build my current version of diffutils. I first ran the command
+'./bootstrap' in accordance with the documentation located in README-hacking.
+
+Then, I needed to apply an additional patch to my source code in accordance with the
+assignment specification. I simply applied the patch manually since it only involved
+some small changes. In order to examine these changes I downloaded the patch file
+using the command:
+'wget http://web.cs.ucla.edu/classes/fall17/cs35L/assign/diffutils-gets.diff'
+
+I then navigated to lib/stdio.in.h and toggled read only using C-x C-q and then
+applied the patch manually.
+
+I continued to run the following commands to finish building diffutils:
+./configure
+make
+make check
+
+I was able to confirm that the diff that I just built works properly by running
+the following commands and confirming that the correct ' vs ` is output.
+
+14. In order to run the sanity check, I needed to move around some of my current
+directories. I moved my current build of diffutils and the source code to the
+folder titled 'diffutils-3.0-patch'. Then, I copied and set up a clean copy of
+v3.0 in the folder 'diffutils-3.0'.
+
+I then proceeded to run the following command in order to generate my file
+'quote-3.0-test.txt':
+./diffutils-3.0-patch/src/diff -pru diffutils-3.0 diffutils-3.0-patch >
+quote-3.0-test.txt
+
+15. I then ran the command:
+diff quote-3.0-test.txt quote-3.0-patch.txt > differences.diff
+
+This output a file listing the differences between the two files above.
+There were some changes that were confusing but after looking through them I
+believe that they are all innocuous and that these files are essentially the
+same.
+
+The main differences were that in one of the folders we had all of the files
+from the built version and so those showed up in the log. Additionally, there
+are some files that both files say the other file is missing so I'm not sure what
+happened there but they both claim that the other file is missing the exact
+same thing and I assume that this is therefore some kind of error in the formatting
+or naming of some of the files in each directory (possible a result of buidling
+one of the versions).

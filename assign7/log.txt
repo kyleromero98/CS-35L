@@ -1,0 +1,137 @@
+Name: Kyle Romero
+UID: 204747283
+Discussion: Laboratory 7
+TA: Tan
+Teammate: Jair Hinojosa
+
+Laboratory 7 - SSH Setup and Use in Applications
+
+Setting Up/SSHing into the Board
+
+I am doing this lab on a Mac and so I had some issues to
+deal with while getting my board set up.
+
+I first connected my board and noticed that the board was
+not recognized by my Mac and did not show up as a removable
+disk. In order to remedy this issue, I followed a link on Piazza
+to download something:
+http://disq.us/url?url=http%3A%2F%2Fnyus.joshuawise.com%2FHoRNDIS
+-rel8pre2-dbg.pkg%3AnWVXptevoA9QSEAQQXuPQfiJ240&cuid=1845838
+
+And then, I ran the following command in the terminal and then
+restarted my Mac:
+sudo rm -rf /System/Library/Extensions/HoRNDIS.kext
+
+This allowed my Mac to recognize my board and allowed me to
+start installing the drivers for my board.
+
+I followed another link on Piazza in order to install the
+unsigned drivers on my system:
+https://github.com/beagleboard/beaglebone-getting-started/blob
+/master/Drivers/Windows/BONE_D64.exe
+From this link I was able to navigate to the Mac OS driver and
+install it.
+
+After realoading the README.htm file I now see that my drivers
+have been successfully reinstalled.
+
+I can now ssh into my board using the following command from
+Piazza:
+sudo ssh root@192.168.7.2
+And then I had to enter my Mac password in order to successfully
+ssh into the BeagleBone board.
+
+At this point I have successfully SSHed into the BeagleBone Board.
+
+Accessing Wifi and Installing Software
+
+To connect the board to wifi I used the following commands:
+sudo connmanctl
+connmanctl> enable wifi
+connmanctl> scan wifi
+connmanctl> services
+
+At this point I see the wifi access point that was set up by
+Professor Eggert:
+CR3760-wifi          wifi_2cf7f1066912_4352333736302d77
+		     696669_managed_psk
+
+And I continued with the following to connect:
+connmanctl> agent on
+connmanctl> connect wifi_2cf7f1066912_4352333736302d776
+	    	    96669_managed_psk
+
+And when queried I entered the following password:
+3760ClassNet
+
+And then I quite from the connmanctl using the following:
+connmanctl> quit
+
+Then, I note for my teammate that the IP address of my
+BeagleBone board is 10.97.85.16 and this was found using
+the command 'ifconfig'.
+
+Then, I use the following commands to install/update the
+necessary software on my board in order to complete the lab:
+sudo apt-get update
+sudo apt-get install xauth
+apt-get install firefox-esr-l10n-en-gb
+
+After letting everything run I have successfully completed
+setting up my board for this lab in accordance with the post
+on Piazza and can continue following the instructions in the
+lecture slides.
+
+Actual Lab Work
+
+First, I acquired a copy of the TA's lecture slides that
+made the post on Piazza from a friend in order to make this
+lab a lot less headache intensive.
+
+To ensure that my environment was setup properly I used the
+following command:
+dpkg --get-selections | grep openssh
+And this returned the proper response of:
+openssh-client					install
+openssh-server					install
+openssh-sftp-server				install
+
+Then I generated my public/private key pair by using the
+following command:
+ssh-keygen
+
+And I pressed enter to not change the default directory
+and entered my password for the key pair.
+
+I then entered the following commands to create a user for my
+my partner by using the following commands:
+sudo useradd -d /home/guest -m guest
+sudo passwd guest
+(I made the password 'password')
+
+Now, I needed to create a .ssh directory for my partner by using
+the following commands:
+cd /home/guest
+sudo mkdir .ssh
+
+Then, I needed to change the permissions of this folder in order
+to allow them to access and do what they want to with that directory:
+sudo chown -R guest .ssh
+sudo chmod 700 .ssh
+
+Then, my partner and I were able to SSH into each other's board by
+using the commands (replacing IP address in each case):
+ssh-copy-id -i guest@192.168.0.52
+ssh guest@192.168.0.52
+
+After SSHing into each other's boards, we were able to confirm that
+we were on each other's boards by using the command 'touch hi' to
+create files called 'hi'. Then, we were able to use 'ls' to see the
+file.
+
+Like many of our classmates on Piazza, we were unable to get a shell
+window or anything to show on our partner's computer because we do
+not have a display for our board and kept getting errors like:
+xterm: Xt error: Can't open display: %s
+xterm: DISPLAY is not set
+Error: GDK_BACKEND does not match available displays

@@ -1,0 +1,153 @@
+Kyle Romero
+204747283
+TA: Tan
+Lab Section 7
+
+Lab #1: Linux and Emacs Scavenger Hunt
+
+1) First, I used the hint to look at the man page for man
+by typing in 'man man'. Then, I was able to locate that
+the command for printing commands with a certain keyword
+is 'man -k (insert keyword here)'. This command will print
+out any commands that have the keyword located at (insert
+keyword here) in their name or description.
+
+2) Finding the locations of these programs can be done
+using the 'which' command. In general, you can find the
+location of any program by typing 'which program' where
+program is the name of the program you are looking for.
+So, for cp we use 'which cp' and we get a path location of
+/usr/local/cs/bin/cp and similarly for wc we use 'which wc'
+to find that the path of the program is /usr/local/cs/bin/wc.
+
+3) First we note that the commands we can execute are location
+a /usr/bin. Then, we use the find command to find things.
+Inspecting the man page for find, by typing 'man find' we
+see that we are able to specify a pattern to search for using the
+-name tag. Therefore, we combine these findings to construct
+the command 'find /usr/bin -name "?"', which responds with
+the following commands and their purposes can be found by using man:
+/usr/bin/[ - Used to evaluate a conditional expression,
+the same as the 'test' command
+/usr/bin/w - Show who is logged on and what they are doing
+/usr/bin/X - Listed, but note this is not a program but
+rather a symoblic link to Xorg
+
+4) In order to inspect the emacs program and what it symbolically
+links to, I first navigate into the /usr/bin folder. Once
+there, I will use the ls -l command to inspect what the emacs
+command actually links to. Furthermore, we can utilize piping
+to feed the output of 'ls -l' into the command 'grep emacs' and
+filter the output to show us only the lines of output that
+might be relevant. Therefore, we use the command 'ls -l | grep
+emacs' to see that the emacs command symbolically links to
+etc/alternatives/emacs.
+
+5) chmod deals with changing permissions on a file. In that
+context and noting what we learned in discussion, g denotes the
+file owner's group and s represents the user accessing the file.
+Therefore, g+s gives the user accessing the file the same
+permissions as the file owner's group.
+
+Second, the 'o-x' part means that we are removing the executable
+permission for those in the other category. o stands for
+other, anyone that is not the file owner or in the file owner's
+group. The '-' means that we are moving this particular permission
+instead of adding it. Finally, the 'x' means executable permission.
+Therefore, the combination 'o-x' means that we are removing
+executable permissions for those in the other group.
+
+6) First we search the man page for find. Inside of this document
+we find that the option -ctime n, where n is essentially the
+number of days we want to look back for. Therefore, the option for
+find that allows us to search for files modified in the last
+three weeks is 'find -ctime -21'. Note the time is negative because
+we are interested in the past.
+
+7) In order to find all directories that have been modified in the
+last three weeks we want to look at all directories that come
+from the root directory. Adapting my previous answer, I found that
+I could use the command 'find / -ctime -21 -type d' to print
+all directories that were modified in the past three weeks. The
+'/' tells the find command to search in the root directory and
+we specify '-type d' in order to only print the directories and
+not other structures such as files and symoblic links.
+
+8) There are 293 symbolic links in the same directory as find on
+the 09 seasnet server (note: this number is different on the
+07 server, there are 246 on 07). This was found using the command
+'ls -l | grep ^l | wc'. First, we list the files in the same
+directory and pipe on the output. Then, we filter and only print
+the lines that begin with an 'l', denoting a link. We can tell
+grep to only look for such lines by using the '^' which means only
+print lines that start with the following pattern. Then, we
+pipe the output again into the wc command which oututs the newline
+count for a given input, followed by the word count and the
+byte count.
+
+9) Looking at the man page for ls I was able to find that we can
+use the '-t' option to sort the files by modification time with
+the newest being listed first. Then, we want to look for regular
+files which are denoted as starting with a '-'. Therefore, we
+can use the command 'ls -lt /usr/lib | grep ^-' to see the regular
+files in the /usr/lib directory sorted by last modified date.
+This yields the oldest file of: libgpg-error.so.0.10.0.
+
+10) Looking at the man page for locale we see that the data for
+each locale is located in the following two directories:
+/usr/lib/locale/locale-archive and /usr/share/i18n/locales.
+Based on the environment variables that are set we know which
+locale data to use.
+
+11) Using what I learned in discussion, running emacs, and
+navigating through some help pages, I was able to find the help
+page that decribes what the command 'C-h a' does. After entering
+this command, you can specify a keyword to search for amongst
+the commands for emacs. After using this command to search for
+sort, I was able to find the following commands:
+Buffer-menu-sort
+sort-columns
+sort-fields
+sort-lines
+sort-numeric-fields
+sort-pages
+sort-paragraphs
+sort-regexp-fields
+tabulated-list-col-sort
+tabulated-list-sort
+
+12) To find what each of these keystrokes do, I was able to
+find that the emacs keystroke 'C-h b' opens up a window that contains
+all of the key bindings for emacs. Once I have opened
+this window from the emacs screen, you can use the command 'C-x o' to
+switch to the new window. Then we can search for the first
+command the assignment asks for using 'C-s' and then typing in
+'C-M a'. This yields the following functions for the commands asked for:
+C-M a - beginning-of-defun: Move backward to the beginning of defun
+C-M b - backward-sexp: Move backward across one balanced expression (sexp)
+C-M c - exit-recursive-edit: Exit from the innermost recursive edit
+      	or minibuffer.
+C-M d - down-list: Move forward down one level of parenthesis
+C-M e - end-of-defun: Move forward to the next end of defun
+C-M f - forward-sexp: Move forward across one balanced expression (sexp)
+C-M g - mark-defun: Put mark at end of this defun, point at beginning
+
+13) Using the same strategy as in the previous question
+(using the emacs command 'C-h b' and then searching for this keystroke),
+I found that the emacs command C-g is used for the following:
+C-g - keyboard-quit: This will signal a 'quit' condition.
+During exectution of Lisp code, this character causes a quit directly.
+Taken directly from the emacs help page.
+
+14) Using a similar strategy as the previous two questions
+(using the emacs command 'C-h b' and then searching for 'yank') I found
+that the yank command "Resinserts ('pastes') the last stretch of killed text."
+
+15) First, I found the keystroke for dired in the same manner as
+the last three questions (using the emacs command 'C-h b' and then
+searching for dired) then, I used the dired command to look at the
+contents of /usr/bin. I found that there was not a significant
+difference other than dired lists the '.' and '..' directories in
+addition everything that ls -l lists.
+
+

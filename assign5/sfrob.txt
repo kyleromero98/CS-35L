@@ -1,0 +1,210 @@
+Name: Kyle Romero
+UID: 204747283
+Section: Lab 7
+TA: Tan
+
+Homework 5: Encrypted Sort Revisited
+
+First, I finished rewriting my sfrob.c from the previous homework.
+Since my original sfrob.c was pretty poorly written, I ended up
+rewriting most of my sfrobu.c. That was unfortunate.
+
+Then, I wrote the BASH script to do essentially the same thing
+except using the standard tr and sort commands. This was pretty simple
+it basically involved creating two sets of values for the decoding/
+encoding set and then using the tr and sort commands to do most of
+the work for us. I created a python script to get most of the information
+for the decoding/encoding scheme, pasted below:
+
+fileoutput = open('keygen.txt', 'w')
+for i in range(0, 256):
+    fileoutput.write('\\');
+    fileoutput.write(str(oct(i ^ 42)).lstrip('0'))
+    if i % 10 == 0:
+        fileoutput.write('\\')
+        fileoutput.write('\n')
+fileoutput.close()
+
+Then, I continued on by writing a python script that could be used
+to generate large files with varying numbers of lines so that I
+could test my programs on them. The file was called filegen.py
+and contains the following:
+
+lines = [10, 50, 100, 250, 500, 1000]
+
+for val in lines:
+    filename = 'big%d.txt' % val
+    fileoutput = open(filename, 'w')
+    for i in range(0, val):
+        fileoutput.write('Hi there, my name is Kyle\n')
+
+fileoutput.close()
+
+Now, armed with these files I was able to test each of the 5
+programs that are specified in the specification to collect
+the following data:
+
+------------Number of Lines: 50
+time ./sfrob < big50.txt
+real	0m0.003s
+user	0m0.001s
+sys	0m0.001s
+
+time ./sfrobu < big50.txt
+real	0m0.003s
+user	0m0.000s
+sys	0m0.003s
+
+time ./sfrobu -f < big50.txt
+real	0m0.003s
+user	0m0.000s
+sys	0m0.003s
+
+time ./sfrobs < big50.txt
+real	0m0.008s
+user	0m0.004s
+sys	0m0.004s
+
+time ./sfrobs -f < big50.txt
+real	0m0.008s
+user	0m0.004s
+sys	0m0.004s
+
+------------Number of Lines: 100
+time ./sfrob < big100.txt
+real	0m0.003s
+user	0m0.000s
+sys	0m0.002s
+
+time ./sfrobu <	big100.txt
+real	0m0.005s
+user	0m0.000s
+sys	0m0.004s
+
+time ./sfrobu -f < big100.txt
+real	0m0.005s
+user	0m0.002s
+sys	0m0.002s
+
+time ./sfrobs < big100.txt
+real	0m0.010s
+user	0m0.006s
+sys	0m0.002s
+
+time ./sfrobs -f < big100.txt
+real	0m0.008s
+user	0m0.002s
+sys	0m0.007s
+
+------------Number of Lines: 250
+time ./sfrob < big250.txt
+real	0m0.004s
+user	0m0.003s
+sys	0m0.000s
+
+time ./sfrobu < big250.txt
+real	0m0.010s
+user	0m0.001s
+sys	0m0.008s
+
+time ./sfrobu -f < big250.txt
+real	0m0.009s
+user	0m0.001s
+sys	0m0.008s
+
+time ./sfrobs < big250.txt
+real	0m0.010s
+user	0m0.003s
+sys	0m0.006s
+
+time ./sfrobs -f < big250.txt
+real	0m0.009s
+user	0m0.006s
+sys	0m0.004s
+
+------------Number of Lines: 500
+time ./sfrob < big500.txt
+real	0m0.006s
+user	0m0.002s
+sys	0m0.002s
+
+time ./sfrobu < big500.txt
+real	0m0.019s
+user	0m0.001s
+sys	0m0.016s
+
+time ./sfrobu -f < big500.txt
+real	0m0.018s
+user	0m0.003s
+sys	0m0.015s
+
+time ./sfrobs < big500.txt
+real	0m0.011s
+user	0m0.004s
+sys	0m0.006s
+
+time ./sfrobs -f < big500.txt
+real	0m0.007s
+user	0m0.005s
+sys	0m0.004s
+
+------------Number of Lines: 1000
+time ./sfrob < big1000.txt
+real	0m0.009s
+user	0m0.004s
+sys	0m0.004s
+
+time ./sfrobu < big1000.txt
+real	0m0.033s
+user	0m0.008s
+sys	0m0.024s
+
+time ./sfrobu -f < big1000.txt
+real	0m0.034s
+user	0m0.006s
+sys	0m0.028s
+
+time ./sfrobs < big1000.txt
+real	0m0.010s
+user	0m0.003s
+sys	0m0.006s
+
+time ./sfrobs -f < big1000.txt
+real	0m0.010s
+user	0m0.005s
+sys	0m0.007s
+
+And then for the number of comparisons in each of these
+cases for sfrobu:
+Lines		Comparisons
+50		1661
+100		3768
+250		10955
+500		24154
+1000		52802
+
+Based on the data above, we can conclude that the number of
+comparisons is roughly linear to the number of lines in the
+file. I came up with the following function:
+comparisons = lines * ~40
+
+Additionally, based on the data above I noted the following:
+
+Out of the three programs, sfrob performed the best across
+all tests, its runtime was considerably lower than sfrobu and
+sfrobs in all cases, especially as the number of lines increased.
+This is likely due to the less intensive nature of buffered I/O
+and the significant reduction in system calls caused by using
+buffered I/O.
+
+This observation is reinforced by noticing that sfrobu spends the
+majority of its time in the system section of the time output. This
+is because sfrobu performs the most system calls and these are handled
+by the system, obviously.
+
+Further, sfrobs scales better than sfrobu which is interesting, although
+both cannot compare to sfrob in terms of performance.
+
+Finally, the -f option doesn't seem to have much affect on the performance
+of each of these programs. In some cases it may even appear that the -f
+option increases the speed of sfrobs, which was unexpected. 

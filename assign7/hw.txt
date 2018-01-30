@@ -1,0 +1,32 @@
+Name: Kyle Romero
+UID: 204747283
+Discussion: Lab 7
+TA: Tan
+
+Homework 7 - SSH Setup and Use in Applications
+
+1. If the other teams had been observing every byte that went
+across our network, then the connection would still be secure.
+The data would be encrypted with the public and private keys
+and the attackers would have the public key. However, the attackers
+would not have access to the private key and so the communication
+would still be considered secure because it would be extremely
+hard for them to decrypt the message.
+
+If the other teams had access to the keystrokes of my partner
+and I, then they would be able to determine the password that
+was used to authenticate the SSH connection between my partner
+and I. This would allow the attackers to access the key and the
+connection would no longer be considered secure.
+
+If I were booting off of a USB drive and the attackers had access
+to this drive, then the attacker could read the public and private
+key off of the drive. This would render our connection insecure
+since the attacker would be able to decrypt any messages along
+that channel.
+
+2. gpg --verify only verifies the signature with the public key,
+therefore, it does not check who has created the file. This is
+a problem because someone could copy your public key and then
+generate some signature with it. You could fix this issue by
+using the private key to generate the signature.
